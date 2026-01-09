@@ -1,0 +1,9 @@
+streamlit
+torch
+torchvision
+transformers
+pillow
+opencv-python
+datasets
+numpy
+google-generativeai
