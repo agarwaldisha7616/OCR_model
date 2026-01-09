@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import os
 import io
+import streamlit as st
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -247,9 +248,10 @@ class GeminiOCRModel(OCRModel):
         return text, inference_time
 
 
+@st.cache_resource(show_spinner=False)
 def load_ocr_model(model_type: str = "TrOCR", use_finetuned: bool = False, local_model_path: str = None) -> OCRModel:
     """
-    Load OCR model based on type.
+    Load OCR model based on type. Cached to avoid reloading on reruns.
     
     Args:
         model_type: Either "TrOCR", "DocTR", or "Gemini"
@@ -257,10 +259,15 @@ def load_ocr_model(model_type: str = "TrOCR", use_finetuned: bool = False, local
         local_model_path: Path to local model directory or .safetensors file (only for TrOCR)
         
     Returns:
-        OCR model instance
+        OCR model instance (cached)
     """
     if model_type == "TrOCR":
-        return TrOCRModel(use_finetuned=use_finetuned, local_model_path=r"D:\projects\Handwriting Recognition\model\model.safetensors")
+        # Check if local model path is provided, otherwise use default or pretrained
+        if local_model_path and os.path.exists(local_model_path):
+            return TrOCRModel(use_finetuned=use_finetuned, local_model_path=local_model_path)
+        else:
+            # For cloud deployment, use pretrained models only
+            return TrOCRModel(use_finetuned=use_finetuned, local_model_path=None)
     elif model_type == "DocTR":
         return DocTRModel()
     elif model_type == "Gemini":

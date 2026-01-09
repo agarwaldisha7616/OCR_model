@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
 from PIL import Image
+import streamlit as st
 
 
+@st.cache_data(show_spinner=False)
 def preprocess_image(image: Image.Image) -> Image.Image:
     """
     Apply preprocessing to enhance handwritten text recognition.

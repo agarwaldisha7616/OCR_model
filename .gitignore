@@ -1,10 +1,15 @@
 ﻿# Python cache
 __pycache__/
 *.pyc
+*.py[cod]
+*$py.class
+*.so
 
 # Environment files
 .env
 .env/
+.venv/
+ENV/
 
 # Virtual environment
 venv/
@@ -12,3 +17,30 @@ venv/
 # Data & models
 data/
 models/
+
+# Model files (large files for cloud deployment)
+model/*.safetensors
+model/*.bin
+model/*.pt
+model/*.pth
+*.h5
+
+# Fine-tuned models (keep in local only)
+trocr-finetuned/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+

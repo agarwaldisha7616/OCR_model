@@ -1,9 +1,13 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TF warnings
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Disable oneDNN messages
+
 import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
 import io
-import os
+import hashlib
 from preprocessing import preprocess_image
 from ocr_models import load_ocr_model, predict_with_fallback
 
@@ -115,32 +119,11 @@ st.sidebar.markdown("""
 - Max size: 200MB
 """)
 
-# Initialize session state for model caching
-if "current_model" not in st.session_state:
-    st.session_state.current_model = None
-    st.session_state.current_model_type = None
-    st.session_state.current_finetuned = None
-    st.session_state.current_local_path = None
-
-# Load model with caching
-def load_model_cached(model_type, use_finetuned, local_model_path=None):
-    # Check if we need to reload
-    if (st.session_state.current_model is None or 
-        st.session_state.current_model_type != model_type or
-        st.session_state.current_finetuned != use_finetuned or
-        st.session_state.current_local_path != local_model_path):
-        
-        with st.spinner(f"Loading {model_type} model..."):
-            try:
-                st.session_state.current_model = load_ocr_model(model_type, use_finetuned, local_model_path)
-                st.session_state.current_model_type = model_type
-                st.session_state.current_finetuned = use_finetuned
-                st.session_state.current_local_path = local_model_path
-            except Exception as e:
-                st.error(f"Failed to load model: {str(e)}")
-                return None
-    
-    return st.session_state.current_model
+# Helper function to get image hash for caching
+@st.cache_data(show_spinner=False)
+def get_image_hash(image: Image.Image) -> str:
+    """Generate hash of image for caching purposes."""
+    return hashlib.md5(image.tobytes()).hexdigest()
 
 # Main content
 st.markdown("---")
@@ -202,8 +185,13 @@ if uploaded_file is not None:
     # OCR Processing
     st.subheader("🔤 Text Extraction")
     
-    # Load model
-    model = load_model_cached(model_type, use_finetuned, local_model_path)
+    # Load model (cached automatically)
+    try:
+        with st.spinner(f"Loading {model_type} model..."):
+            model = load_ocr_model(model_type, use_finetuned, local_model_path)
+    except Exception as e:
+        st.error(f"Failed to load model: {str(e)}")
+        model = None
     
     if model is not None:
         # Run OCR
